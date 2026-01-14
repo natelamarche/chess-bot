@@ -39,3 +39,16 @@
 
 # debug information files
 *.dwo
+
+# build artifacts
+build/
+cmake-build-*/
+out/
+
+# IDE
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+
