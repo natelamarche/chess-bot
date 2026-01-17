@@ -17,7 +17,7 @@ public:
     const PieceOnSquare& at(Square sq) const {return squares_[sq];}
 
     Colour side_to_move() const {return side_to_move_;}
-    int en_passant_suquare() const {return en_passant_sq_;} // -1 if none
+    int en_passant_square() const {return en_passant_sq_;} // -1 if none
 
     bool can_castle_white_k() const {return castle_wk_;}
     bool can_castle_white_q() const {return castle_wq_;}
