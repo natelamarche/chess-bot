@@ -9,6 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(chess
     src/chess/board.cpp
     src/chess/move.cpp
+    src/chess/movegen.cpp
 )
 
 target_include_directories(chess
