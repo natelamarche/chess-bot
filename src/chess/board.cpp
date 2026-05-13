@@ -186,5 +186,82 @@ void Board::set_fen(const std::string& fen) {
     // halfmove/fullmove currently ignored by engine logic, but we parsed them for validity.
 }
 
+void Board::clear_castling_rights_for_square(Square sq){
+    switch (sq) {
+        case 0:
+            castle_wq_ = false;
+            break;
+        case 4:
+            castle_wk_ = false;
+            castle_wq_ = false;
+            break;
+        case 7:
+            castle_wk_ = false;
+            break;
+        case 56:
+            castle_bq_ = false;
+            break;
+        case 60:
+            castle_bq_ = false;
+            castle_bk_ = false;
+            break;
+        case 63:
+            castle_bk_ = false;
+            break;
+    }
+}
+
+
+void Board::make_move(const Move& move){
+    Colour stm = side_to_move_;
+    
+    PieceOnSquare from_piece = squares_[move.from]; 
+
+    // Change castling rights
+    if (castle_bk_ || castle_bq_ || castle_wk_ || castle_wq_){
+        clear_castling_rights_for_square(move.from);
+        clear_castling_rights_for_square(move.to);
+    }
+
+    // Handle en passant
+    en_passant_sq_ = -1;
+    if (from_piece.piece == Piece::Pawn && std::abs(move.from - move.to) == 16){
+        en_passant_sq_ = (move.from + move.to) / 2;
+    }
+
+    // Make move
+    squares_[move.from] = {};
+
+    if (move.promotion != Piece::None){
+        squares_[move.to] = {move.promotion, stm};
+
+    } else if (move.is_en_passant){
+        int captured_pawn_sq = move.to + (stm == Colour::White ? -8 : 8);
+        squares_[move.to] = from_piece;
+        squares_[captured_pawn_sq] = {};
+
+    } else if (move.is_castle){
+        if (move.from > move.to){
+            squares_[move.to] = from_piece;
+            squares_[move.to + 1] = {Piece::Rook, stm};
+            squares_[move.to - 2] = {};
+
+        } else {
+            squares_[move.to] = from_piece;
+            squares_[move.to - 1] = {Piece::Rook, stm};
+            squares_[move.to + 1] = {};
+
+        }
+    } else {
+        squares_[move.to] = from_piece;
+
+    }
+
+
+    side_to_move_ = (side_to_move_ == Colour::White ? Colour::Black : Colour::White);
+
+}
+
 
 } // namespace chess
+

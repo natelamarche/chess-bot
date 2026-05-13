@@ -2,6 +2,7 @@
 #include <array>
 #include <string>
 #include "chess/types.h"
+#include "chess/move.h"
 
 namespace chess {
 
@@ -15,6 +16,7 @@ public:
     std::string to_string() const;
 
     const PieceOnSquare& at(Square sq) const {return squares_[sq];}
+    void make_move(const Move& move);
 
     Colour side_to_move() const {return side_to_move_;}
     int en_passant_square() const {return en_passant_sq_;} // -1 if none
@@ -30,7 +32,8 @@ private:
     Colour side_to_move_{Colour::White};
     bool castle_wk_{false}, castle_wq_{false}, castle_bk_{false}, castle_bq_{false};
     int en_passant_sq_{-1};
-
+    
+    void clear_castling_rights_for_square(Square sq);
 
 };
 

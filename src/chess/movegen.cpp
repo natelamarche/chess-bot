@@ -255,10 +255,9 @@ void generate_king_moves(const Board& board, std::vector<Move>& moves, Square sq
     }
 }
 
-
 }
 
-std::vector<Move> generate_moves(const Board& board){
+std::vector<Move> generate_pseudo_legal_moves(const Board& board){
     std::vector<Move> moves;
 
     const Colour stm = board.side_to_move();
