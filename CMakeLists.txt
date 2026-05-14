@@ -10,6 +10,7 @@ add_library(chess
     src/chess/board.cpp
     src/chess/move.cpp
     src/chess/movegen.cpp
+    src/perft/perft.cpp
 )
 
 target_include_directories(chess
