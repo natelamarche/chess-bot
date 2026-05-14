@@ -11,6 +11,8 @@ add_library(chess
     src/chess/move.cpp
     src/chess/movegen.cpp
     src/perft/perft.cpp
+    src/engine/evaluate.cpp
+    src/engine/search.cpp
 )
 
 target_include_directories(chess

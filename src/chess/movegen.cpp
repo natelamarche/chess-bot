@@ -389,6 +389,8 @@ bool is_square_attacked(const Board& board, Square sq, Colour by_colour){
 
 }
 
+}
+
 bool in_check(const Board& board, Colour clr){
     
     for (Square sq = 0; sq < 64; sq++){
@@ -403,8 +405,6 @@ bool in_check(const Board& board, Colour clr){
 
     return false;
     
-}
-
 }
 
 std::vector<Move> generate_pseudo_legal_moves(const Board& board){
