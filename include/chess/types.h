@@ -10,7 +10,7 @@ namespace chess {
 
     struct PieceOnSquare {
         Piece piece{Piece::None};
-        Colour colour{Colour::White};
+        Colour colour{Colour::White};        
     };
 
 } // namespace chess

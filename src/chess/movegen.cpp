@@ -389,6 +389,22 @@ bool is_square_attacked(const Board& board, Square sq, Colour by_colour){
 
 }
 
+bool in_check(const Board& board, Colour clr){
+    
+    for (Square sq = 0; sq < 64; sq++){
+        const auto& target = board.at(sq);
+        
+        if (target.colour == clr && target.piece == Piece::King) {
+            Colour attacker = (clr == Colour::White ? Colour::Black : Colour::White);
+
+            return is_square_attacked(board, sq, attacker);
+        }
+    } 
+
+    return false;
+    
+}
+
 }
 
 std::vector<Move> generate_pseudo_legal_moves(const Board& board){
