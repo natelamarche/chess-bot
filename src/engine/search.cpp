@@ -11,14 +11,14 @@ constexpr int INF = 1000000;
 
 }
 
-int negamax(const Board& board, int depth){
+int negamax(const Board& board, int depth, int alpha, int beta){
     if (depth == 0) return evaluate(board);
 
     std::vector<Move> moves = generate_legal_moves(board);
 
     if (moves.empty()){
         if (in_check(board, board.side_to_move())){
-            return -mate_score - depth;
+            return -mate_score + depth;
         } 
         return 0;
 
@@ -30,10 +30,18 @@ int negamax(const Board& board, int depth){
         Board next = board;
         next.make_move(move);
 
-        int score = -negamax(next, depth - 1);
+        int score = -negamax(next, depth - 1, -beta, -alpha);
         
         if (score > best_score){
             best_score = score;
+        }
+
+        if (score > alpha){
+            alpha = score;
+        }
+
+        if (alpha >= beta){
+            break;
         }
 
     }
@@ -50,22 +58,29 @@ SearchResult search_best_move(const Board& board, int depth){
     std::vector<Move> moves = generate_legal_moves(board);
 
     if (moves.empty()){
-        result.score = negamax(board, depth);
+        result.score = negamax(board, depth, -INF, INF);
         return result;
     }    
     
+    int alpha = -INF;
+    int beta = INF;
+
     for (const Move& move : moves) {
-        
         Board next = board;
         next.make_move(move);
 
-        int score = -negamax(next, depth - 1);
+        int score = -negamax(next, depth - 1, -beta, -alpha);
 
         if (score > result.score){
             result.score = score;
             result.move = move;
-
         }
+
+        if (score > alpha) {
+            alpha = score;
+        }
+
+
     }
 
     return result;
