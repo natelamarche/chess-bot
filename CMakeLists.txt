@@ -25,3 +25,7 @@ target_compile_options(chess PRIVATE
 # App: simple CLI
 add_executable(chess_cli apps/main.cpp)
 target_link_libraries(chess_cli PRIVATE chess)
+
+# Tests: perft
+add_executable(perft_test tests/perft/perft_tests.cpp)
+target_link_libraries(perft_test PRIVATE chess)
