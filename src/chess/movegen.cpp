@@ -452,4 +452,36 @@ std::vector<Move> generate_pseudo_legal_moves(const Board& board){
 
 }
 
+std::vector<Move> generate_legal_moves(const Board& board){
+    std::vector<Move> legal;
+    std::vector<Move> pseudo_legal = generate_pseudo_legal_moves(board);
+
+    Colour stm = board.side_to_move();
+
+    for (const Move& move : pseudo_legal){
+        if (move.is_castle) {
+            Colour enemy = (stm == Colour::White) ? Colour::Black : Colour::White;
+
+            if (in_check(board, stm)) continue;
+
+            Square transit = (move.to > move.from) 
+                ? static_cast<Square>(move.from + 1)
+                : static_cast<Square>(move.from - 1);
+
+            if (is_square_attacked(board, transit, enemy)) continue;
+
+        }
+        
+        Board next = board;
+        next.make_move(move);
+
+        if (!in_check(next, stm)) {
+            legal.push_back(move);
+        }
+    }
+
+    return legal;
+
+}
+
 }
