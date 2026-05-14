@@ -255,6 +255,140 @@ void generate_king_moves(const Board& board, std::vector<Move>& moves, Square sq
     }
 }
 
+bool is_square_attacked(const Board& board, Square sq, Colour by_colour){
+    
+    static const std::array<std::array<int, 2>, 8> knight_moveset 
+            {{{-2, 1}, {-2, -1}, {-1, -2}, {-1, 2}, 
+            {1, -2}, {1, 2}, {2, 1}, {2, -1}}};
+
+    static const std::array<std::array<int, 2>, 4> rook_dirs
+        {{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}};
+
+    static const std::array<std::array<int, 2>, 4> bishop_dirs
+        {{{1, 1}, {-1, 1}, {1, -1}, {-1, -1}}};
+    
+    static const std::array<std::array<int, 2>, 8> king_moveset 
+        {{{-1, -1}, {-1, 0}, {-1, 1}, {0, 1},
+         {1, 1}, {1, 0}, {1, -1}, {0, -1}}};
+
+    static const std::array<std::array<int, 2>, 2> wPawn_moveset 
+        {{{-1, -1}, {1, -1}}};
+
+    static const std::array<std::array<int, 2>, 2> bPawn_moveset 
+        {{{-1, 1}, {1, 1}}};
+
+    const int file = sq % 8;
+    const int rank = sq / 8;
+
+    // Attack by pawn
+    if (by_colour == Colour::White){
+        for (const auto& dsq : wPawn_moveset){
+            int f = file + dsq[0];
+            if (f > 7 || f < 0) continue;
+            
+            int attacker_sq = f + (rank + dsq[1]) * 8;
+            if (attacker_sq > 63 || attacker_sq < 0) continue;
+
+            const auto& attacker = board.at(attacker_sq);
+            if (attacker.piece == Piece::Pawn && attacker.colour == by_colour) return true;
+
+        }
+    } else {
+        for (const auto& dsq : bPawn_moveset){
+            int f = file + dsq[0];
+            if (f > 7 || f < 0) continue;
+            
+            int attacker_sq = f + (rank + dsq[1]) * 8;
+            if (attacker_sq > 63 || attacker_sq < 0) continue;
+
+            const auto& attacker = board.at(attacker_sq);
+            if (attacker.piece == Piece::Pawn && attacker.colour == by_colour) return true;
+
+        }
+    }
+    
+    // Attack by knight
+    for (const auto& dsq : knight_moveset){
+        int f = file + dsq[0];
+        if (f > 7 || f < 0) continue;
+        
+        int attacker_sq = f + (rank + dsq[1]) * 8;
+        if (attacker_sq > 63 || attacker_sq < 0) continue;
+
+        const auto& attacker = board.at(attacker_sq);
+        if (attacker.piece == Piece::Knight && attacker.colour == by_colour) return true;
+
+
+    }
+
+    // Attack by king
+    for (const auto& dsq : king_moveset){
+        int f = file + dsq[0];
+        if (f > 7 || f < 0) continue;
+        
+        int attacker_sq = f + (rank + dsq[1]) * 8;
+        if (attacker_sq > 63 || attacker_sq < 0) continue;
+
+        const auto& attacker = board.at(attacker_sq);
+        if (attacker.piece == Piece::King && attacker.colour == by_colour) return true;
+
+
+    }
+
+    // Attack by rook/queen
+    for (const auto& dsq : rook_dirs){
+        int r = rank;
+        int f = file;
+
+        while (true){
+            r += dsq[1];
+            f += dsq[0];
+
+            if (r < 0 || r > 7 || f < 0 || f > 7) break;
+
+            int new_sq = r * 8 + f;
+            const auto& target = board.at(static_cast<Square>(new_sq));
+
+            if (target.piece == Piece::None){
+                continue;
+            } else {
+                if (target.colour == by_colour && (target.piece == Piece::Rook || target.piece == Piece::Queen)){
+                    return true;
+                }
+                break;
+            }
+        }
+    }
+
+    // Attack by bishop/queen
+    for (const auto& dsq : bishop_dirs){
+        int r = rank;
+        int f = file;
+
+        while (true){
+            r += dsq[1];
+            f += dsq[0];
+
+            if (r < 0 || r > 7 || f < 0 || f > 7) break;
+
+            int new_sq = r * 8 + f;
+            const auto& target = board.at(static_cast<Square>(new_sq));
+
+            if (target.piece == Piece::None){
+                continue;
+            } else {
+                if (target.colour == by_colour && (target.piece == Piece::Bishop || target.piece == Piece::Queen)){
+                    return true;
+                }
+                break;
+            }
+        }
+    }
+
+    return false;
+
+}
+
 }
 
 std::vector<Move> generate_pseudo_legal_moves(const Board& board){
