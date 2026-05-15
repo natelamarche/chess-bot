@@ -18,7 +18,7 @@ int negamax(const Board& board, int depth, int alpha, int beta){
 
     if (moves.empty()){
         if (in_check(board, board.side_to_move())){
-            return -mate_score + depth;
+            return -mate_score - depth;
         } 
         return 0;
 
