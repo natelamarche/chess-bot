@@ -54,36 +54,7 @@ Board::Board(){
 }
 
 void Board::set_start_position(){
-    squares_.fill({Piece::None, Colour::White});
-
-    auto set = [&](int file, int rank, Piece p, Colour c){
-        int sq = rank * 8 + file; // rank 0: a1..h1
-        squares_[sq] = {p, c};
-    };
-
-    // white
-    set(0,0, Piece::Rook, Colour::White);
-    set(1,0, Piece::Knight, Colour::White);
-    set(2,0, Piece::Bishop, Colour::White);
-    set(3,0, Piece::Queen, Colour::White);
-    set(4,0, Piece::King, Colour::White);
-    set(5,0, Piece::Bishop, Colour::White);
-    set(6,0, Piece::Knight, Colour::White);
-    set(7,0, Piece::Rook, Colour::White);
-    for (int f = 0; f < 8; ++f) set(f,1, Piece::Pawn, Colour::White);
-
-    // Black pieces
-    set(0,7, Piece::Rook, Colour::Black);
-    set(1,7, Piece::Knight, Colour::Black);
-    set(2,7, Piece::Bishop, Colour::Black);
-    set(3,7, Piece::Queen, Colour::Black);
-    set(4,7, Piece::King, Colour::Black);
-    set(5,7, Piece::Bishop, Colour::Black);
-    set(6,7, Piece::Knight, Colour::Black);
-    set(7,7, Piece::Rook, Colour::Black);
-    for (int f = 0; f < 8; ++f) set(f,6, Piece::Pawn, Colour::Black);
-
-
+    set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
 std::string Board::to_string() const {
@@ -264,4 +235,3 @@ void Board::make_move(const Move& move){
 
 
 } // namespace chess
-

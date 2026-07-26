@@ -4,6 +4,7 @@ project(chess_bot LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Library: core engine
 add_library(chess
@@ -31,3 +32,7 @@ target_link_libraries(chess_cli PRIVATE chess)
 # Tests: perft
 add_executable(perft_test tests/perft/perft_tests.cpp)
 target_link_libraries(perft_test PRIVATE chess)
+
+# UCI
+add_executable(chess_uci src/uci/uciLoop.cpp)
+target_link_libraries(chess_uci PRIVATE chess)
