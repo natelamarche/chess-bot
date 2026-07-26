@@ -158,8 +158,9 @@ void UciLoop::handle_go(std::istringstream& input) {
         return;
     }
 
+    chess::engine::Searcher searcher;
     const chess::engine::SearchResult result =
-        chess::engine::search_best_move(board_, depth);
+        searcher.search_best_move(board_, depth);
 
     std::cout << "info depth " << depth << " score cp " << result.score << '\n'
               << "bestmove " << move_to_uci(result.move) << std::endl;

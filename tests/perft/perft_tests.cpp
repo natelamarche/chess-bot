@@ -3,6 +3,8 @@
 #include <map>
 #include <fstream>
 #include <sstream>
+#include <chrono>
+
 #include "perft/perft.h"
 #include "chess/board.h"
 
@@ -23,7 +25,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    string file_path = "tests/perft/classical.txt";
+    string file_path = "tests/classical.txt";
     if (argc > 2){
         file_path = argv[2];
     }
@@ -36,7 +38,9 @@ int main(int argc, char* argv[]) {
 
     string line;
 
+    const chrono::steady_clock::time_point  start = chrono::steady_clock::now();
     int caseNum = 1;
+    uint64_t nodes = 0;
     int testsRun = 0;
     int testsSkipped = 0;
     while (getline(file, line)){
@@ -81,6 +85,7 @@ int main(int argc, char* argv[]) {
         chess::Board board;
         board.set_fen(position.fen);
         uint64_t result = chess::perft(board, depth);
+        nodes += result;
 
         if (result != expected->second){
             cout << "ERROR: Line number: " << caseNum 
@@ -100,10 +105,16 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    const chrono::steady_clock::time_point end = chrono::steady_clock::now();
+    const chrono::milliseconds elapsed = chrono::duration_cast<chrono::milliseconds>(end - start);
+
     cout << "All tests passed! Ran " << testsRun
         << " cases at depth " << depth
         << " and skipped " << testsSkipped
-        << " cases without that depth.\n";
+        << " cases without that depth.\n"
+        << "    Nodes: " << nodes << "\n"
+        << "    Time: " << elapsed << "\n"
+        << "    NPS: " << nodes/elapsed.count() << endl;
 
     return 0;
 

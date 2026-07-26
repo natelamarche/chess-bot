@@ -33,6 +33,10 @@ target_link_libraries(chess_cli PRIVATE chess)
 add_executable(perft_test tests/perft/perft_tests.cpp)
 target_link_libraries(perft_test PRIVATE chess)
 
+# Tests: search benchmark
+add_executable(search_bench tests/search-benchmark/search_bench.cpp)
+target_link_libraries(search_bench PRIVATE chess)
+
 # UCI
 add_executable(chess_uci src/uci/uciLoop.cpp)
 target_link_libraries(chess_uci PRIVATE chess)

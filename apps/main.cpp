@@ -45,6 +45,7 @@ int main() {
     b.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
     cout << "To make a move, use the format: {xx xx}, no parentheses (e.g. e2 e4)\n";
+    chess::engine::Searcher searcher{};
 
     while (true) {
 
@@ -80,8 +81,8 @@ int main() {
             cout << b.to_string() << "\n";
             break;
         }
-        
-        chess::engine::SearchResult opponent_move = chess::engine::search_best_move(b, 5);
+
+        chess::engine::SearchResult opponent_move = searcher.search_best_move(b, 5);
 
         b.make_move(opponent_move.move);
 

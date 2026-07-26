@@ -11,7 +11,8 @@ constexpr int INF = 1000000;
 
 }
 
-int negamax(const Board& board, int depth, int alpha, int beta){
+int Searcher::negamax(const Board& board, int depth, int alpha, int beta){
+    stats_.nodes++;
     if (depth == 0) return evaluate(board);
 
     std::vector<Move> moves = generate_legal_moves(board);
@@ -41,6 +42,7 @@ int negamax(const Board& board, int depth, int alpha, int beta){
         }
 
         if (alpha >= beta){
+            stats_.beta_cutoffs++;
             break;
         }
 
@@ -50,7 +52,7 @@ int negamax(const Board& board, int depth, int alpha, int beta){
 
 }
 
-SearchResult search_best_move(const Board& board, int depth){
+SearchResult Searcher::search_best_move(const Board& board, int depth){
 
     SearchResult result;
     result.score = -INF;
@@ -87,5 +89,8 @@ SearchResult search_best_move(const Board& board, int depth){
 
 }
 
+void Searcher::resetStats(){
+    stats_ = SearchStats{};
+}
 
 }
