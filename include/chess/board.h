@@ -27,7 +27,7 @@ public:
     std::string to_string() const;
 
     const PieceOnSquare& at(Square sq) const {return squares_[sq];}
-    const UndoState make_move(const Move& move);
+    UndoState make_move(const Move& move);
     void unmake_move(const Move& move, const UndoState& undo_state);
 
     Colour side_to_move() const {return side_to_move_;}

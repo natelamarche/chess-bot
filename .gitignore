@@ -42,6 +42,7 @@
 
 # build artifacts
 build/
+build-release/
 cmake-build-*/
 out/
 bin/

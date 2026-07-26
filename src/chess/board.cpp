@@ -183,7 +183,7 @@ void Board::clear_castling_rights_for_square(Square sq){
 }
 
 
-const UndoState Board::make_move(const Move& move){
+UndoState Board::make_move(const Move& move){
     
     Colour stm = side_to_move_;
     PieceOnSquare from_piece = squares_[move.from]; 
