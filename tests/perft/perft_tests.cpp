@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
         << " cases without that depth.\n"
         << "    Nodes: " << nodes << "\n"
         << "    Time: " << elapsed << "\n"
-        << "    NPS: " << nodes/elapsed.count() << endl;
+        << "    NPS: " << 1000*nodes/elapsed.count() << endl;
 
     if (oldCoutBuf){
         cout.rdbuf(oldCoutBuf);

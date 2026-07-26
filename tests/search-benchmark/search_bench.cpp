@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    streambuf* oldCoutBuf;
+    streambuf* oldCoutBuf = nullptr;
     ofstream outFile;
 
     if (argc > 2){
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
         << "    Quiescence nodes: " << stats.quiescence_nodes << "\n"
         << "    Beta cutoffs: " << stats.beta_cutoffs << "\n"
         << "    Time: " << elapsed.count() << "ms\n"
-        << "    NPS: " << stats.nodes/elapsed.count()*1000 << endl;
+        << "    NPS: " << 1000*stats.nodes/elapsed.count() << endl;
 
     if (oldCoutBuf){
         cout.rdbuf(oldCoutBuf);

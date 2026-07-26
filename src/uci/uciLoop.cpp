@@ -182,7 +182,7 @@ std::string UciLoop::move_to_uci(const chess::Move& move) {
 }
 
 std::optional<chess::Move>
-UciLoop::parse_move(const chess::Board& board, const std::string& text) {
+UciLoop::parse_move(chess::Board& board, const std::string& text) {
     if ((text.size() != 4 && text.size() != 5)
         || !is_square_text(text, 0)
         || !is_square_text(text, 2)) {

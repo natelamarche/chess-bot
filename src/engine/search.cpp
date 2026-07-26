@@ -11,7 +11,7 @@ constexpr int INF = 1000000;
 
 }
 
-int Searcher::negamax(const Board& board, int depth, int alpha, int beta){
+int Searcher::negamax(Board& board, int depth, int alpha, int beta){
     stats_.nodes++;
     if (depth == 0) return evaluate(board);
 
@@ -28,11 +28,12 @@ int Searcher::negamax(const Board& board, int depth, int alpha, int beta){
     int best_score = -INF;
 
     for (const Move& move : moves) {
-        Board next = board;
-        next.make_move(move);
+        UndoState undo_state = board.make_move(move);
 
-        int score = -negamax(next, depth - 1, -beta, -alpha);
+        int score = -negamax(board, depth - 1, -beta, -alpha);
         
+        board.unmake_move(move, undo_state);
+
         if (score > best_score){
             best_score = score;
         }
@@ -52,7 +53,7 @@ int Searcher::negamax(const Board& board, int depth, int alpha, int beta){
 
 }
 
-SearchResult Searcher::search_best_move(const Board& board, int depth){
+SearchResult Searcher::search_best_move(Board& board, int depth){
 
     SearchResult result;
     result.score = -INF;
@@ -68,10 +69,11 @@ SearchResult Searcher::search_best_move(const Board& board, int depth){
     int beta = INF;
 
     for (const Move& move : moves) {
-        Board next = board;
-        next.make_move(move);
+        UndoState undo_state = board.make_move(move);
+        
+        int score = -negamax(board, depth - 1, -beta, -alpha);
 
-        int score = -negamax(next, depth - 1, -beta, -alpha);
+        board.unmake_move(move, undo_state);
 
         if (score > result.score){
             result.score = score;

@@ -4,7 +4,7 @@
 
 namespace chess {
     
-std::uint64_t perft(const Board& board, int depth){
+std::uint64_t perft(Board& board, int depth){
 
     if (depth == 0){
         return 1;
@@ -14,10 +14,11 @@ std::uint64_t perft(const Board& board, int depth){
 
     std::uint64_t nodes = 0;
     for (const Move& move : moveset){
-        Board next = board;
-        next.make_move(move);
+        UndoState undo_state = board.make_move(move);
+    
+        nodes += perft(board, depth - 1);
 
-        nodes += perft(next, depth - 1);
+        board.unmake_move(move, undo_state);
 
     }
 

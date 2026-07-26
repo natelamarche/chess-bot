@@ -4,7 +4,7 @@
 
 namespace chess {
 
-std::uint64_t perft(const Board& board, int depth);
+std::uint64_t perft(Board& board, int depth);
 
 }
 

@@ -21,5 +21,5 @@ private:
 
     static std::string move_to_uci(const chess::Move& move);
     static std::optional<chess::Move>
-        parse_move(const chess::Board& board, const std::string& text);
+        parse_move(chess::Board& board, const std::string& text);
 };

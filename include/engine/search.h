@@ -19,7 +19,7 @@ struct SearchStats {
 
 class Searcher {
 public:
-    SearchResult search_best_move(const Board& board, int depth);
+    SearchResult search_best_move(Board& board, int depth);
 
     const SearchStats& getStats() const {
         return stats_;
@@ -29,7 +29,7 @@ public:
 
 
 private:
-    int negamax(const Board& board, int depth, int alpha, int beta);
+    int negamax(Board& board, int depth, int alpha, int beta);
 
     SearchStats stats_;
 

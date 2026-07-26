@@ -452,7 +452,7 @@ std::vector<Move> generate_pseudo_legal_moves(const Board& board){
 
 }
 
-std::vector<Move> generate_legal_moves(const Board& board){
+std::vector<Move> generate_legal_moves(Board& board){
     std::vector<Move> legal;
     std::vector<Move> pseudo_legal = generate_pseudo_legal_moves(board);
 
@@ -472,12 +472,13 @@ std::vector<Move> generate_legal_moves(const Board& board){
 
         }
         
-        Board next = board;
-        next.make_move(move);
+        const UndoState undo_state = board.make_move(move);
 
-        if (!in_check(next, stm)) {
+        if (!in_check(board, stm)) {
             legal.push_back(move);
         }
+
+        board.unmake_move(move, undo_state);
     }
 
     return legal;

@@ -132,14 +132,14 @@ void Board::set_fen(const std::string& fen) {
     else throw std::runtime_error("Invalid FEN: side-to-move must be 'w' or 'b'");
 
     // ---- 3) Castling rights ----
-    castle_wk_ = castle_wq_ = castle_bk_ = castle_bq_ = false;
+    castling_rights_.castle_wk = castling_rights_.castle_wq = castling_rights_.castle_bk = castling_rights_.castle_bq = false;
     if (castling != "-") {
         for (char c : castling) {
             switch (c) {
-                case 'K': castle_wk_ = true; break;
-                case 'Q': castle_wq_ = true; break;
-                case 'k': castle_bk_ = true; break;
-                case 'q': castle_bq_ = true; break;
+                case 'K': castling_rights_.castle_wk = true; break;
+                case 'Q': castling_rights_.castle_wq = true; break;
+                case 'k': castling_rights_.castle_bk = true; break;
+                case 'q': castling_rights_.castle_bq = true; break;
                 default: throw std::runtime_error("Invalid FEN: bad castling rights");
             }
         }
@@ -160,36 +160,37 @@ void Board::set_fen(const std::string& fen) {
 void Board::clear_castling_rights_for_square(Square sq){
     switch (sq) {
         case 0:
-            castle_wq_ = false;
+            castling_rights_.castle_wq = false;
             break;
         case 4:
-            castle_wk_ = false;
-            castle_wq_ = false;
+            castling_rights_.castle_wk = false;
+            castling_rights_.castle_wq = false;
             break;
         case 7:
-            castle_wk_ = false;
+            castling_rights_.castle_wk = false;
             break;
         case 56:
-            castle_bq_ = false;
+            castling_rights_.castle_bq = false;
             break;
         case 60:
-            castle_bq_ = false;
-            castle_bk_ = false;
+            castling_rights_.castle_bq = false;
+            castling_rights_.castle_bk = false;
             break;
         case 63:
-            castle_bk_ = false;
+            castling_rights_.castle_bk = false;
             break;
     }
 }
 
 
-void Board::make_move(const Move& move){
-    Colour stm = side_to_move_;
+const UndoState Board::make_move(const Move& move){
     
+    Colour stm = side_to_move_;
     PieceOnSquare from_piece = squares_[move.from]; 
+    UndoState undo_state{squares_[move.to].piece, castling_rights_, en_passant_sq_};
 
     // Change castling rights
-    if (castle_bk_ || castle_bq_ || castle_wk_ || castle_wq_){
+    if (castling_rights_.castle_bk || castling_rights_.castle_bq || castling_rights_.castle_wk || castling_rights_.castle_wq){
         clear_castling_rights_for_square(move.from);
         clear_castling_rights_for_square(move.to);
     }
@@ -207,9 +208,11 @@ void Board::make_move(const Move& move){
         squares_[move.to] = {move.promotion, stm};
 
     } else if (move.is_en_passant){
+        undo_state.captured_piece = Piece::Pawn;
         int captured_pawn_sq = move.to + (stm == Colour::White ? -8 : 8);
         squares_[move.to] = from_piece;
         squares_[captured_pawn_sq] = {};
+        
 
     } else if (move.is_castle){
         if (move.from > move.to){
@@ -231,7 +234,47 @@ void Board::make_move(const Move& move){
 
     side_to_move_ = (side_to_move_ == Colour::White ? Colour::Black : Colour::White);
 
+    return undo_state;
+
 }
+
+void Board::unmake_move(const Move& move, const UndoState& undo_state){
+    castling_rights_ = undo_state.castling_rights;
+    en_passant_sq_ = undo_state.en_passant_sq;
+
+    Colour o_stm = side_to_move_;
+    side_to_move_ = (side_to_move_ == Colour::White ? Colour::Black : Colour::White);
+    Colour stm = side_to_move_;
+
+    if (move.is_en_passant){
+        squares_[move.from] = {Piece::Pawn, stm};
+        squares_[move.to] = {};
+        squares_[move.to + (stm == Colour::White ? -8 : 8)] = {Piece::Pawn, o_stm};
+    
+    } else if (move.promotion != Piece::None) {
+        squares_[move.from] = {Piece::Pawn, stm};
+        squares_[move.to] = {undo_state.captured_piece, o_stm};
+
+    } else if (move.is_castle){
+        if (move.from > move.to){
+            squares_[move.from] = {Piece::King, stm};
+            squares_[move.to] = {Piece::None, stm};
+            squares_[move.to + 1] = {};
+            squares_[move.to - 2] = {Piece::Rook, stm};
+
+        } else {
+            squares_[move.from] = {Piece::King, stm};
+            squares_[move.to] = {Piece::None, stm};
+            squares_[move.to - 1] = {};
+            squares_[move.to + 1] = {Piece::Rook, stm};
+
+        }
+    } else {
+        squares_[move.from] = squares_[move.to];
+        squares_[move.to] = {undo_state.captured_piece, o_stm};
+    }
+    
+};
 
 
 } // namespace chess
