@@ -38,5 +38,7 @@ add_executable(search_bench tests/search-benchmark/search_bench.cpp)
 target_link_libraries(search_bench PRIVATE chess)
 
 # UCI
-add_executable(chess_uci src/uci/uciLoop.cpp)
-target_link_libraries(chess_uci PRIVATE chess)
+add_executable(engine src/uci/uciLoop.cpp)
+target_link_libraries(engine PRIVATE chess)
+
+install(TARGETS engine DESTINATION bin)

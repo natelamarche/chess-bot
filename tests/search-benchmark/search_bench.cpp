@@ -20,14 +20,26 @@ int main(int argc, char* argv[]) {
     }
 
     string file_path = "tests/classical.txt";
-    if (argc > 2){
-        file_path = argv[2];
-    }
-
+    
     fstream file{file_path};
     if (!file.is_open()){
         cout << "Could not open file: " << file_path << "\n";
         return 1;
+    }
+
+    streambuf* oldCoutBuf;
+    ofstream outFile;
+
+    if (argc > 2){
+        outFile.open(argv[2], ios::app);
+        
+        if (!outFile){
+            cout << "Could not open output file: " << argv[2] << "\n";
+            return 1;
+        }
+
+
+        oldCoutBuf = cout.rdbuf(outFile.rdbuf());
     }
 
     string line;
@@ -70,8 +82,12 @@ int main(int argc, char* argv[]) {
         << "    Nodes: " << stats.nodes << "\n"
         << "    Quiescence nodes: " << stats.quiescence_nodes << "\n"
         << "    Beta cutoffs: " << stats.beta_cutoffs << "\n"
-        << "    Time: " << elapsed.count() << "\n"
-        << "    NPS: " << stats.nodes/elapsed.count() << endl;
+        << "    Time: " << elapsed.count() << "ms\n"
+        << "    NPS: " << stats.nodes/elapsed.count()*1000 << endl;
+
+    if (oldCoutBuf){
+        cout.rdbuf(oldCoutBuf);
+    }
 
     return 0;
 

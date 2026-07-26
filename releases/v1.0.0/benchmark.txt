@@ -1,0 +1,39 @@
+Search:
+
+All cases run! Ran 128 positions at depth 6
+    Nodes: 32023360
+    Quiescence nodes: 0
+    Beta cutoffs: 4584332
+    Time: 168807ms
+    NPS: 189000
+
+All cases run! Ran 128 positions at depth 5
+    Nodes: 4920252
+    Quiescence nodes: 0
+    Beta cutoffs: 372979
+    Time: 14040ms
+    NPS: 350000
+
+All cases run! Ran 128 positions at depth 4
+    Nodes: 432073
+    Quiescence nodes: 0
+    Beta cutoffs: 70737
+    Time: 2189ms
+    NPS: 197000
+
+Perft:
+
+All tests passed! Ran 128 cases at depth 5 and skipped 0 cases without that depth.
+    Nodes: 394753266
+    Time: 355870ms
+    NPS: 1109
+
+All tests passed! Ran 127 cases at depth 4 and skipped 1 cases without that depth.
+    Nodes: 12268777
+    Time: 15831ms
+    NPS: 774
+    
+All tests passed! Ran 126 cases at depth 3 and skipped 2 cases without that depth.
+    Nodes: 486175
+    Time: 575ms
+    NPS: 845
