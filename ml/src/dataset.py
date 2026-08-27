@@ -157,9 +157,11 @@ positions = positions.take(NUM_POSITIONS)
 positions = ChessNNUEDataset(list(positions))
 
 train_len = int(len(positions) * 0.8)
-val_len = int(len(positions) - train_len)
+val_len = int(len(positions) * 0.1)
+test_len = int(len(positions) - train_len - val_len)
 
-train_set, val_set = random_split(positions, [train_len, val_len])
+train_set, val_set, test_set = random_split(positions, [train_len, val_len, test_len])
 
 torch.save(train_set, "ml/data/train_set.pt")
 torch.save(val_set, "ml/data/val_set.pt")
+torch.save(test_set, "ml/data/test_set.pt")

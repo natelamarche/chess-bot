@@ -1,76 +1,74 @@
 import torch
-import numpy as np
-import matplotlib as plt
-
-from ml.src.dataset import val_loader
-from ml.src.model import material_eval
-from ml.src.train import model, train_loss_history, val_loss_history
-
-plt.plot(train_loss_history, c=(1,0,0), label="Training Loss")
-plt.plot(val_loss_history, c=(0,1,0), label="Validation Loss")
-plt.legend()
-plt.show()
-
+from torch.utils.data import DataLoader
+import tqdm
+from ml.src.model import NNUE
+from ml.src.dataset import ChessNNUEDataset, nnue_collate_fn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
 
+test_set = torch.load("ml/data/test_set.pt", weights_only=False)
+
+test_loader = DataLoader(
+    test_set,
+    batch_size=4096,
+    collate_fn=nnue_collate_fn,
+    num_workers=8,
+    pin_memory=True
+)
+
+model = NNUE()
+model.load_state_dict(torch.load("ml/model/model_weights.pth"), map_location=device)
 model.to(device)
+
 model.eval()
 
 with torch.inference_mode():
     total_MAE = 0
     total_MSE = 0
+    
     MAE_range = [0,0,0,0]
     MAE_range_len = [0,0,0,0]
-    correct_class = 0
     
-    total_MAE_mat = 0
-    total_MSE_mat = 0
-    MAE_range_mat = [0,0,0,0]
-
-    correct_class_mat = 0
+    correct_class = 0    
+    correct_close_class = 0
     
     total_len = 0
-     
-    for batch_X, batch_y in val_loader:
-        batch_X = batch_X.to(device)
-        batch_y = batch_y.to(device)
+    close_len = 0
+    
+    progress = tqdm(test_loader, desc="Evaluating")
+    for white_features, black_features, targets, stms in progress:
+        white_features = white_features.to(device)
+        black_features = black_features.to(device)
+        targets = targets.to(device)
+        stms = stms.to(device)
         
-        output = model(batch_X).squeeze(-1)
-        material = material_eval(batch_X).squeeze(-1)
-        batch_y = batch_y.squeeze(-1)
+        predictions = model(white_features, black_features, stms)
 
-        output_p = convert_to_pawns(output)
-        batch_y_p = convert_to_pawns(batch_y)
-
-        batch_size = batch_X.size(0)
+        batch_size = targets.size(0)
         
-        error = (output_p - batch_y_p).abs()
-        error_mat = (material - batch_y_p).abs()
+        error = (predictions - targets).abs()
         
         total_MAE += error.mean().item() * batch_size
         total_MSE += (error**2).mean().item() * batch_size
-        correct_class += (torch.sign(output) == torch.sign(batch_y)).sum()
+        correct_class += (torch.sign(targets) == torch.sign(predictions)).sum()
         
         for i, (low, high) in enumerate([(0, 1), (1, 3), (3, 5), (5, 10)]):
             if i == 0:
-                mask = (batch_y_p.abs() >= low) & (batch_y_p.abs() <= high)
+                mask = (targets.abs() >= low) & (targets.abs() <= high)
             else:
-                mask = (batch_y_p.abs() > low) & (batch_y_p.abs() <= high)
+                mask = (targets.abs() > low) & (targets.abs() <= high)
             
             count = mask.sum().item()
             
             if count > 0:
-                MAE_range[i] += error[mask].mean().item() * count 
-                MAE_range_mat[i] += error_mat[mask].mean().item() * count
-                
+                MAE_range[i] += error[mask].mean().item() * count                 
                 MAE_range_len[i] += count
-
-
-        total_MAE_mat += error_mat.mean().item() * batch_size
-        total_MSE_mat += (error_mat**2).mean().item() * batch_size
-        correct_class_mat += (torch.sign(material) == torch.sign(batch_y)).sum()
+        
+        close_mask = targets.abs() <= 1
+        
+        correct_close_class += ((predictions[close_mask] > 0) == (targets[close_mask] > 0)).sum()
+        
+        close_len += close_mask.sum()
         
         total_len += batch_size
         
@@ -78,23 +76,10 @@ with torch.inference_mode():
         f"Model MAE: {total_MAE/total_len:.4f}\n"
         f"Model MSE: {total_MSE/total_len:.4f}\n"
         f"Correct Class: {correct_class/total_len:.4%}\n"
+        f"Close Correct Class (<1): {correct_close_class/close_len:.4%}\n"
         f"MAE Breakdown\n"
         f"  [0,1]: {MAE_range[0]/MAE_range_len[0]:.4f} on {MAE_range_len[0]} classes\n"
         f"  (1,3]: {MAE_range[1]/MAE_range_len[1]:.4f} on {MAE_range_len[1]} classes\n"
         f"  (3,5]: {MAE_range[2]/MAE_range_len[2]:.4f} on {MAE_range_len[2]} classes\n"
         f"  (5,10]: {MAE_range[3]/MAE_range_len[3]:.4f} on {MAE_range_len[3]} classes\n"
-
-    )
-    
-    print(
-        f"Material MAE: {total_MAE_mat/total_len:.4f}\n"
-        f"Material MSE: {total_MSE_mat/total_len:.4f}\n"
-        f"Correct Class: {correct_class_mat/total_len:.4%}\n"
-        f"MAE Breakdown\n"
-        f"  [0,1]: {MAE_range_mat[0]/MAE_range_len[0]:.4f} on {MAE_range_len[0]} classes\n"
-        f"  (1,3]: {MAE_range_mat[1]/MAE_range_len[1]:.4f} on {MAE_range_len[1]} classes\n"
-        f"  (3,5]: {MAE_range_mat[2]/MAE_range_len[2]:.4f} on {MAE_range_len[2]} classes\n"
-        f"  (5,10]: {MAE_range_mat[3]/MAE_range_len[3]:.4f} on {MAE_range_len[3]} classes\n"
-    )
-    
-       
+    )       
