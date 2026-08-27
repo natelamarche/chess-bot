@@ -47,3 +47,6 @@ class NNUE(nn.Module):
         x = torch.cat([first, second], dim=1)
         
         return self.output_network(x).squeeze(-1)
+    
+loss_function = nn.HuberLoss(delta=1.0)
+
