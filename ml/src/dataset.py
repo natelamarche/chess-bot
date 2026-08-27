@@ -1,7 +1,8 @@
 import torch
-from torch.utils.data import Dataset, random_split, DataLoader 
+from torch.utils.data import Dataset as TorchDataset
 import chess
-from dataset import load_dataset
+from datasets import Dataset as HFDataset
+from datasets import DatasetDict, load_dataset
 
 FRIENDLY_PIECES = {
     chess.PAWN: 0,
@@ -74,13 +75,9 @@ def encode_position(board, perspective):
 
 MAX_EVAL = 10
 
-class ChessNNUEDataset(Dataset):
+class ChessNNUEDataset(TorchDataset):
     def __init__(self, positions):
-        self.positions = [
-            position 
-            for position in positions
-            if position["cp"] is not None   # We are not considering Mate positions
-        ]
+        self.positions = positions
         
     def __len__(self):
         return len(self.positions)
@@ -100,6 +97,7 @@ class ChessNNUEDataset(Dataset):
         
         target = max(-MAX_EVAL, min(evaluation/100, MAX_EVAL))
         
+        # model expects target to be from stm perspective
         if side_to_move == chess.BLACK:
             target *= -1
         
@@ -143,25 +141,42 @@ def nnue_collate_fn(batch):
         targets,
         stms
     )
+
+if __name__ == "__main__":
+    positions = load_dataset(
+        "mateuszgrzyb/lichess-stockfish-normalized",
+        split="train",
+        streaming=True
+    )
+
+    NUM_POSITIONS = 250_000
+
+    positions = positions.take(NUM_POSITIONS)
+
+    raw_positions = list(positions)
+
+    filtered_positions = [
+        position
+        for position in raw_positions
+        if position["cp"] is not None
+    ]
     
-positions = load_dataset(
-    "mateuszgrzyb/lichess-stockfish-normalized",
-    split="train",
-    streaming=True
-)
-
-NUM_POSITIONS = 250_000
-
-positions = positions.take(NUM_POSITIONS)
-
-positions = ChessNNUEDataset(list(positions))
-
-train_len = int(len(positions) * 0.8)
-val_len = int(len(positions) * 0.1)
-test_len = int(len(positions) - train_len - val_len)
-
-train_set, val_set, test_set = random_split(positions, [train_len, val_len, test_len])
-
-torch.save(train_set, "ml/data/train_set.pt")
-torch.save(val_set, "ml/data/val_set.pt")
-torch.save(test_set, "ml/data/test_set.pt")
+    dataset = HFDataset.from_list(filtered_positions)
+    
+    first_split = dataset.train_test_split(
+        test_size=0.2,
+        seed=10
+    )
+    
+    second_split = first_split["test"].train_test_split(
+        test_size=0.5,
+        seed=10
+    )
+    
+    splits = DatasetDict({
+        "train": first_split["train"],
+        "validation": second_split["train"],
+        "test": second_split["test"]
+    })
+    
+    splits.save_to_disk("ml/data/positions")
