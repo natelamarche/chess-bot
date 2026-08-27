@@ -1,75 +1,49 @@
 import torch
 import torch.nn as nn
+from ml.src.dataset import NUM_EMBEDDINGS, PAD_IDX
 
-def material_eval(board: torch.Tensor) -> torch.Tensor:
-    """Return White's material advantage measured in pawns."""
-    if board.ndim not in (3, 4):
-        raise ValueError("Expected a board with shape (C, 8, 8) or (B, C, 8, 8)")
-    if board.shape[-3] < 12:
-        raise ValueError("Expected at least 12 piece channels")
-
-    is_single_board = board.ndim == 3
-    boards = board.unsqueeze(0) if is_single_board else board
-    piece_values = boards.new_tensor([1, 3, 3, 5, 9, 0])
-    piece_counts = boards[:, :12].sum(dim=(-2, -1))
-
-    black_material = piece_counts[:, :6] @ piece_values
-    white_material = piece_counts[:, 6:12] @ piece_values
-    evaluation = (white_material - black_material).unsqueeze(-1)
-
-    return evaluation[0] if is_single_board else evaluation
-
-class ResidualBlock(nn.Module):
-    def __init__(self, channels):
+class NNUE(nn.Module):
+    def __init__(self, accumulator_size=128):
         super().__init__()
         
-        self.block = nn.Sequential(
-            nn.Conv2d(channels, channels, 3, padding=1),
-            nn.ReLU(),
-            
-            nn.Conv2d(channels, channels, 3, padding=1),
-        )
-
-    def forward(self, x):
-        return torch.relu(self.block(x) + x)
-    
-    
-class ChessCNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv_network = nn.Sequential(
-            nn.Conv2d(18, 64, 3, padding=1),
-            nn.ReLU(),
-            
-            ResidualBlock(64),
-            ResidualBlock(64),
-            ResidualBlock(64),
-            ResidualBlock(64),
-            
-            nn.Conv2d(64, 128, 3, padding=1),
-            nn.ReLU()
-        )
-        self.neural_network = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(128*8*8, 128),
-            nn.ReLU(),
-            nn.Dropout(0.3),
-            
-            nn.Linear(128, 1)
+        self.feature_embedding = nn.Embedding(
+            num_embeddings=NUM_EMBEDDINGS,
+            embedding_dim=accumulator_size,
+            padding_idx=PAD_IDX
         )
         
-    def forward(self, x):
-        x = self.conv_network(x)
-        x = self.neural_network(x)
-        return x
-      
-model = ChessCNN()      
-     
-loss_function = nn.HuberLoss(delta=1.0)
-
-optimizer = torch.optim.AdamW(
-    params=model.parameters(),
-    lr=1e-3,
-    weight_decay=1e-4
-)
-
+        self.accumulator_bias = nn.Parameter(
+            torch.zeros(accumulator_size)
+        )
+        
+        self.output_network = nn.Sequential(
+            nn.Linear(accumulator_size * 2, 64),
+            nn.ReLU(),
+            
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            
+            nn.Linear(32, 1)
+        )
+        
+    def accumulate(self, features):
+        embeddings = self.feature_embedding(features)
+        
+        accumulator = embeddings.sum(dim=1)
+        
+        accumulator = accumulator + self.accumulator_bias
+        
+        return torch.relu(accumulator) 
+    
+    def forward(self, white_features, black_features, side_to_move):
+        white_accumulator = self.accumulate(white_features)
+        black_accumulator = self.accumulate(black_features)
+        
+        stm = side_to_move.bool()
+        
+        first = torch.where(stm.unsqueeze(1), white_accumulator, black_accumulator)
+        second = torch.where(stm.unsqueeze(1), black_accumulator, white_accumulator)
+        
+        x = torch.cat([first, second], dim=1)
+        
+        return self.output_network(x).squeeze(-1)

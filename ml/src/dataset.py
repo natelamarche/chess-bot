@@ -161,20 +161,5 @@ val_len = int(len(positions) - train_len)
 
 train_set, val_set = random_split(positions, [train_len, val_len])
 
-train_loader = DataLoader(
-    train_set,
-    batch_size=4096,
-    shuffle=True,
-    collate_fn=nnue_collate_fn,
-    num_workers=8,
-    pin_memory=True,
-    persistent_workers=True
-)
-
-val_loader = DataLoader(
-    val_set,
-    batch_size=4096,
-    collate_fn=nnue_collate_fn,
-    num_workers=8,
-    pin_memory=True
-)
+torch.save(train_set, "ml/data/train_set.pt")
+torch.save(val_set, "ml/data/val_set.pt")
