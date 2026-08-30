@@ -142,26 +142,28 @@ def nnue_collate_fn(batch):
         stms
     )
 
-if __name__ == "__main__":
+def generate_positions(num_positions):
     positions = load_dataset(
-        "mateuszgrzyb/lichess-stockfish-normalized",
-        split="train",
-        streaming=True
+            "mateuszgrzyb/lichess-stockfish-normalized",
+            split=f"train",
+            streaming=True
     )
-
-    NUM_POSITIONS = 250_000
-
-    positions = positions.take(NUM_POSITIONS)
-
-    raw_positions = list(positions)
-
-    filtered_positions = [
-        position
-        for position in raw_positions
-        if position["cp"] is not None
-    ]
     
-    dataset = HFDataset.from_list(filtered_positions)
+    positions = positions.filter(
+        lambda position: position["cp"] is not None
+    )
+    
+    yield from positions.take(num_positions)
+
+def main():
+    num_positions = 50_000
+
+    dataset = HFDataset.from_generator(
+        generate_positions,
+        gen_kwargs={"num_positions": num_positions},
+        cache_dir="ml/data/cache",
+        keep_in_memory=False
+    )
     
     first_split = dataset.train_test_split(
         test_size=0.2,
@@ -180,3 +182,6 @@ if __name__ == "__main__":
     })
     
     splits.save_to_disk("ml/data/positions")
+    
+if __name__ == "__main__":
+    main()
