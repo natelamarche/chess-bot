@@ -8,13 +8,13 @@ from dataset import ChessNNUEDataset, nnue_collate_fn
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    splits = load_from_disk("ml/data/positions")
-    test_set = ChessNNUEDataset(splits["test"])
+    splits = load_from_disk("ml/data/encoded_positions")
+    
+    test_set = splits["test"].with_format("torch")
 
     test_loader = DataLoader(
         test_set,
         batch_size=4096,
-        collate_fn=nnue_collate_fn,
         num_workers=8,
         pin_memory=True
     )
@@ -39,11 +39,11 @@ def main():
         close_len = 0
         
         progress = tqdm(test_loader, desc="Evaluating")
-        for white_features, black_features, targets, stms in progress:
-            white_features = white_features.to(device)
-            black_features = black_features.to(device)
-            targets = targets.to(device)
-            stms = stms.to(device)
+        for batch in progress:
+            white_features = batch["white_features"].to(device, dtype=torch.int32, non_blocking=True)
+            black_features = batch["black_features"].to(device, dtype=torch.int32, non_blocking=True)
+            targets = batch["target"].to(device, non_blocking=True)
+            stms = batch["side_to_move"].to(device, non_blocking=True)
             
             predictions = model(white_features, black_features, stms)
 

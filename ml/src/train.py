@@ -6,10 +6,10 @@ from dataset import ChessNNUEDataset, nnue_collate_fn, MAX_EVAL
 from model import NNUE, loss_function
 
 def main():
-    splits = load_from_disk("ml/data/positions")
+    splits = load_from_disk("ml/data/encoded_positions")
 
-    train_set = ChessNNUEDataset(splits["train"])
-    val_set = ChessNNUEDataset(splits["validation"])
+    train_set = splits["train"].with_format("torch")
+    val_set = splits["validation"].with_format("torch")
 
     SEED=10
     torch.manual_seed(SEED)
@@ -18,20 +18,20 @@ def main():
 
     train_loader = DataLoader(
         train_set,
-        batch_size=4096,
-        shuffle=True,
+        batch_size=16_384,
+        shuffle=False,
         generator=train_generator,
-        collate_fn=nnue_collate_fn,
-        num_workers=8,
+        num_workers=4,
+        prefetch_factor=8,
         pin_memory=True,
         persistent_workers=True
     )
 
     val_loader = DataLoader(
         val_set,
-        batch_size=4096,
-        collate_fn=nnue_collate_fn,
-        num_workers=8,
+        batch_size=16_384,
+        num_workers=1,
+        prefetch_factor=8,
         pin_memory=True,
         persistent_workers=True
     )
@@ -64,11 +64,11 @@ def main():
         total_positions = 0
         
         progress = tqdm(train_loader, desc=f"Epoch: {epoch+1}/{num_epochs} | Training")
-        for white_features, black_features, targets, stms in progress:
-            white_features = white_features.to(device, non_blocking=True)
-            black_features = black_features.to(device, non_blocking=True)
-            targets = targets.to(device, non_blocking=True)
-            stms = stms.to(device, non_blocking=True)
+        for batch in progress:
+            white_features = batch["white_features"].to(device, dtype=torch.int32, non_blocking=True)
+            black_features = batch["black_features"].to(device, dtype=torch.int32, non_blocking=True)
+            targets = batch["target"].to(device, non_blocking=True)
+            stms = batch["side_to_move"].to(device, non_blocking=True)
             
             predictions = model(white_features, black_features, stms)
             
@@ -97,11 +97,11 @@ def main():
             total_positions = 0
             
             progress = tqdm(val_loader, desc=f"Epoch {epoch+1}/{num_epochs} | Validation")
-            for white_features, black_features, targets, stms in progress:
-                white_features = white_features.to(device, non_blocking=True)
-                black_features = black_features.to(device, non_blocking=True)
-                targets = targets.to(device, non_blocking=True)
-                stms = stms.to(device, non_blocking=True)
+            for batch in progress:
+                white_features = batch["white_features"].to(device, dtype=torch.int32, non_blocking=True)
+                black_features = batch["black_features"].to(device, dtype=torch.int32, non_blocking=True)
+                targets = batch["target"].to(device, non_blocking=True)
+                stms = batch["side_to_move"].to(device, non_blocking=True)
                 
                 predictions = model(white_features, black_features, stms)
                 

@@ -59,4 +59,3 @@ __pycache__/
 *.py[cod]
 
 ml/data
-ml/model
