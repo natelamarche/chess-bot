@@ -1,9 +1,9 @@
 import torch
 from torch.utils.data import DataLoader
-import tqdm
+from tqdm import tqdm
 from datasets import load_from_disk
-from ml.src.model import NNUE
-from ml.src.dataset import ChessNNUEDataset, nnue_collate_fn
+from model import NNUE
+from dataset import ChessNNUEDataset, nnue_collate_fn
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -20,7 +20,7 @@ def main():
     )
 
     model = NNUE()
-    model.load_state_dict(torch.load("ml/model/model_weights.pth"), map_location=device)
+    model.load_state_dict(torch.load("ml/model/model_weights.pth", map_location=device)["model_state"])
     model.to(device)
 
     model.eval()

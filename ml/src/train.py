@@ -1,9 +1,9 @@
 import torch
-import tqdm
+from tqdm import tqdm
 from datasets import load_from_disk
 from torch.utils.data import DataLoader
-from ml.src.dataset import ChessNNUEDataset, nnue_collate_fn, MAX_EVAL
-from ml.src.model import NNUE, loss_function
+from dataset import ChessNNUEDataset, nnue_collate_fn, MAX_EVAL
+from model import NNUE, loss_function
 
 def main():
     splits = load_from_disk("ml/data/positions")
@@ -32,7 +32,8 @@ def main():
         batch_size=4096,
         collate_fn=nnue_collate_fn,
         num_workers=8,
-        pin_memory=True
+        pin_memory=True,
+        persistent_workers=True
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -143,6 +144,8 @@ def main():
         "max_eval": MAX_EVAL,
         "best_val_loss": best_val_loss.item()
     }, "ml/model/model_weights.pth")
+    
+    print("DONE")
     
 if __name__ == "__main__":
     main()
