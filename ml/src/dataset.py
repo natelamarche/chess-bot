@@ -1,8 +1,13 @@
 import torch
 from torch.utils.data import Dataset as TorchDataset
+
 import chess
+
 from datasets import Dataset as HFDataset
 from datasets import DatasetDict, load_dataset
+
+import os
+import sys
 
 FRIENDLY_PIECES = {
     chess.PAWN: 0,
@@ -185,3 +190,9 @@ def main():
     
 if __name__ == "__main__":
     main()
+    
+    sys.stdout.flush()
+    sys.stderr.flush()
+    
+    # Avoid PyArrow's deadlocked C++ thread-pool destructor
+    os._exit(0)
