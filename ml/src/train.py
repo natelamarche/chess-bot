@@ -2,8 +2,8 @@ import torch
 from tqdm import tqdm
 from datasets import load_from_disk
 from torch.utils.data import DataLoader
-from dataset import ChessNNUEDataset, nnue_collate_fn, MAX_EVAL
-from model import NNUE, loss_function
+from ml.src.dataset import ChessNNUEDataset, nnue_collate_fn, MAX_EVAL
+from ml.src.model import NNUE, loss_function
 
 def main():
     splits = load_from_disk("ml/data/encoded_positions")

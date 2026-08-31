@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from dataset import NUM_EMBEDDINGS, PAD_IDX
+from ml.src.dataset import NUM_EMBEDDINGS, PAD_IDX
 
 class NNUE(nn.Module):
     def __init__(self, accumulator_size=128):

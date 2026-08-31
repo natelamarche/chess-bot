@@ -2,8 +2,8 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from datasets import load_from_disk
-from model import NNUE
-from dataset import ChessNNUEDataset, nnue_collate_fn
+from ml.src.model import NNUE
+from ml.src.dataset import ChessNNUEDataset, nnue_collate_fn
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
