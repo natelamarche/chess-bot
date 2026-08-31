@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(chess_bot LANGUAGES CXX)
 
+enable_testing()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -14,6 +16,8 @@ add_library(chess
     src/perft/perft.cpp
     src/engine/evaluate.cpp
     src/engine/search.cpp
+    src/engine/nnue_model.cpp
+    src/engine/nnue_features.cpp
 )
 
 target_include_directories(chess
@@ -32,6 +36,11 @@ target_link_libraries(chess_cli PRIVATE chess)
 # Tests: perft
 add_executable(perft_test tests/perft/perft_tests.cpp)
 target_link_libraries(perft_test PRIVATE chess)
+
+# Tests: NNUE feature encoding
+add_executable(nnue_features_test tests/nnue/nnue_features_tests.cpp)
+target_link_libraries(nnue_features_test PRIVATE chess)
+add_test(NAME nnue_features_test COMMAND nnue_features_test)
 
 # Tests: search benchmark
 add_executable(search_bench tests/search-benchmark/search_bench.cpp)
