@@ -4,15 +4,17 @@
 #include <sstream>
 #include <optional>
 
-#include "engine/search.h"
 #include "chess/board.h"
+#include "engine/nnue_model.h"
 
 class UciLoop {
 
 public:
+    UciLoop();
     void run();
 
 private:
+    chess::engine::NnueModel model_;
     chess::Board board_;
 
     void handle_command(const std::string& line);

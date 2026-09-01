@@ -6,6 +6,7 @@
 
 #include "chess/board.h"
 #include "engine/search.h"
+#include "engine/nnue_model.h"
 
 using namespace std;
 int main(int argc, char* argv[]) {
@@ -43,7 +44,11 @@ int main(int argc, char* argv[]) {
     }
 
     string line;
-    chess::engine::Searcher searcher{};
+    
+    chess::engine::NnueModel model;
+    model.load("ml/model/model.nnue");
+
+    chess::engine::Searcher searcher{model};
     
     const chrono::steady_clock::time_point  start = chrono::steady_clock::now();
     int testsRun = 0;

@@ -4,6 +4,7 @@
 #include "chess/board.h"
 #include "chess/movegen.h"
 #include "engine/search.h"
+#include "engine/nnue_model.h"
 
 using namespace std;
 
@@ -45,7 +46,10 @@ int main() {
     b.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
     cout << "To make a move, use the format: {xx xx}, no parentheses (e.g. e2 e4)\n";
-    chess::engine::Searcher searcher{};
+    chess::engine::NnueModel model;
+    model.load("ml/model/model.nnue");
+    
+    chess::engine::Searcher searcher{model};
 
     while (true) {
 

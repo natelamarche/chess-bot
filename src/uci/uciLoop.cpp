@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "chess/movegen.h"
+#include "engine/search.h"
 
 const std::string ENGINE_NAME = "chess-bot";
 const std::string AUTHOR_NAME = "Nate Lamarche";
@@ -44,6 +45,10 @@ chess::Square square_from_text(const std::string& text, std::size_t offset) {
         (text[offset] - 'a') + 8 * (text[offset + 1] - '1'));
 }
 
+} // namespace
+
+UciLoop::UciLoop() {
+    model_.load("ml/model/model.nnue");
 }
 
 void UciLoop::run() {
@@ -158,7 +163,8 @@ void UciLoop::handle_go(std::istringstream& input) {
         return;
     }
 
-    chess::engine::Searcher searcher;
+    chess::engine::Searcher searcher{model_};
+    
     const chess::engine::SearchResult result =
         searcher.search_best_move(board_, depth);
 

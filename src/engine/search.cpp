@@ -13,7 +13,7 @@ constexpr int INF = 1000000;
 
 int Searcher::negamax(Board& board, int depth, int alpha, int beta){
     stats_.nodes++;
-    if (depth == 0) return evaluate(board);
+    if (depth == 0) return evaluate(board, model_);
 
     std::vector<Move> moves = generate_legal_moves(board);
 

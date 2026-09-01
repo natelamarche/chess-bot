@@ -1,5 +1,7 @@
 #include "engine/evaluate.h"
+#include "engine/nnue_state.h"
 #include <array>
+#include <cmath>
 
 namespace chess::engine {
 namespace {
@@ -39,13 +41,14 @@ int material_eval(const Board& board){
 
 }
 
-int evaluate(const Board& board){
+int evaluate(const Board& board, const NnueModel& model){
 
-    int score = 0;
+    const auto white = nnue::rebuild_accumulator(board, Colour::White, model);
+    const auto black = nnue::rebuild_accumulator(board, Colour::Black, model);
 
-    score += material_eval(board);
+    const float pawns = model.forward(white, black, board.side_to_move());
 
-    return board.side_to_move() == Colour::White ? score : -score;
+    return static_cast<int>(std::lround(pawns * 100.0F));
 
 }
 

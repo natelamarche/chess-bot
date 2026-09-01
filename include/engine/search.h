@@ -2,6 +2,7 @@
 
 #include "chess/board.h"
 #include "chess/move.h"
+#include "engine/nnue_model.h"
 
 namespace chess::engine {
 
@@ -19,6 +20,8 @@ struct SearchStats {
 
 class Searcher {
 public:
+    explicit Searcher(const NnueModel& model) : model_{model} {};
+
     SearchResult search_best_move(Board& board, int depth);
 
     const SearchStats& getStats() const {
@@ -29,6 +32,8 @@ public:
 
 
 private:
+    const NnueModel& model_;
+
     int negamax(Board& board, int depth, int alpha, int beta);
 
     SearchStats stats_;
