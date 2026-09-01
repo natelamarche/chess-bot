@@ -2,6 +2,7 @@
 
 #include <array>
 #include <bit>
+#include <algorithm>
 #include <fstream>
 #include <limits>
 #include <stdexcept>
@@ -88,6 +89,41 @@ void read_float_vector(
     
 }
 
+void linear(
+    std::span<const float> input,
+    std::span<const float> weights,
+    std::span<const float> bias,
+    std::span<float> output
+)
+{
+    if (weights.size() != input.size() * output.size()){
+        throw std::invalid_argument("Invalid linear weights dimensions");
+    }
+
+    if (bias.size() != output.size()){
+        throw std::invalid_argument("Invalid linear bias dimensions");
+    }
+
+    for (std::size_t row = 0; row < output.size(); row++) {
+        float sum = bias[row];
+
+        for (std::size_t column = 0; column < input.size(); column++){
+            sum += weights[row * input.size() + column]
+            * input[column];
+        }
+
+        output[row] = sum;
+
+    }
+
+}
+
+void relu_in_place(std::span<float> values) {
+    for (float& value : values){
+        value = std::max(value, 0.0F);
+    }
+}
+
 } // namespace
 
 void NnueModel::load(const std::filesystem::path& path){
@@ -102,7 +138,7 @@ void NnueModel::load(const std::filesystem::path& path){
 
     std::array<char, 8> magic{};
     read_exact(input, magic.data(), magic.size(), "NNUE magic");
-    
+
     if (magic != expected_magic) {
         throw std::runtime_error("Invalid NNUE magic");
     }
@@ -110,7 +146,7 @@ void NnueModel::load(const std::filesystem::path& path){
     const std::uint32_t format_version = read_u32_le(input);
     const std::uint32_t feature_schema = read_u32_le(input);
     const std::uint32_t num_features = read_u32_le(input);
-    
+
     accumulator_size_ = read_u32_le(input);
     hidden1_size_ = read_u32_le(input);
     hidden2_size_ = read_u32_le(input);
@@ -223,5 +259,55 @@ const float* NnueModel::feature_weights(std::uint32_t feature) const {
         + static_cast<std::size_t>(feature) * accumulator_size_;
 
 }
+
+float NnueModel::forward(
+        std::span<const float> white_accumulator,
+        std::span<const float> black_accumulator,
+        Colour side_to_move
+    ) const {
+
+    if (!loaded_) {
+        throw std::logic_error("NNUE model is not loaded");
+    }
+
+    if (
+        white_accumulator.size() != accumulator_size_ ||
+        black_accumulator.size() != accumulator_size_
+    ) {
+        throw std::invalid_argument("Invalid accumulator size");
+    }
+
+    std::array<float, 256> input{};
+    std::array<float, 64> hidden1{};
+    std::array<float, 32> hidden2{};
+    std::array<float, 1> output{};
+
+    const auto first =
+        side_to_move == Colour::White
+            ? white_accumulator
+            : black_accumulator;
+
+    const auto second =
+        side_to_move == Colour::White
+            ? black_accumulator
+            : white_accumulator;
+
+    for (std::size_t i = 0; i < accumulator_size_; ++i) {
+        input[i] = std::max(first[i], 0.0F);
+        input[accumulator_size_ + i] =
+            std::max(second[i], 0.0F);
+    }
+
+    linear(input, layer1_weights_, layer1_bias_, hidden1);
+    relu_in_place(hidden1);
+
+    linear(hidden1, layer2_weights_, layer2_bias_, hidden2);
+    relu_in_place(hidden2);
+
+    linear(hidden2, output_weights_, output_bias_, output);
+
+    return output[0];
+}
+
 
 } // namespace chess::engine

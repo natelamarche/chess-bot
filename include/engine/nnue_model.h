@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <span>
 #include <vector>
+#include "chess/types.h"
 
 namespace chess::engine {
 
@@ -28,6 +29,12 @@ public:
     std::span<const float> accumulator_bias() const {
         return accumulator_bias_;
     }
+
+    float forward(
+        std::span<const float> white_accumulator,
+        std::span<const float> black_accumulator,
+        Colour side_to_move
+    ) const;
 
 private:
     bool loaded_{false};

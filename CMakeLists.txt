@@ -51,6 +51,14 @@ set_tests_properties(nnue_state_test PROPERTIES
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
+# Tests: NNUE inference
+add_executable(nnue_inference_test tests/nnue/nnue_inference_tests.cpp)
+target_link_libraries(nnue_inference_test PRIVATE chess)
+add_test(NAME nnue_inference_test COMMAND nnue_inference_test)
+set_tests_properties(nnue_inference_test PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
 # Tests: search benchmark
 add_executable(search_bench tests/search-benchmark/search_bench.cpp)
 target_link_libraries(search_bench PRIVATE chess)
