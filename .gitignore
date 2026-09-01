@@ -43,6 +43,7 @@
 # build artifacts
 build/
 build-release/
+build-optimized/
 cmake-build-*/
 out/
 bin/

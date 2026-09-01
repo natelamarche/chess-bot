@@ -1,0 +1,24 @@
+Search:
+
+All cases run! Ran 128 positions at depth 6
+    Nodes: 79128336
+    Quiescence nodes: 0
+    Beta cutoffs: 8599292
+    Time: 128772ms
+    NPS: 614484
+
+All cases run! Ran 128 positions at depth 5
+    Nodes: 10306485
+    Quiescence nodes: 0
+    Beta cutoffs: 699487
+    Time: 17686ms
+    NPS: 582748
+
+All cases run! Ran 128 positions at depth 4
+    Nodes: 891914
+    Quiescence nodes: 0
+    Beta cutoffs: 94273
+    Time: 1408ms
+    NPS: 633461
+
+No changes to perft
