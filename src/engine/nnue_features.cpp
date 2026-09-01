@@ -55,12 +55,20 @@ std::uint32_t feature_index(Square king_square, std::uint32_t piece_index, Squar
             + piece_square;
 }
 
+std::uint32_t feature_for_piece(Square king_square, PieceOnSquare piece, Square piece_square, Colour perspective){
+    return feature_index(
+        orient_square(king_square, perspective),
+        relative_piece_index(piece, perspective),
+        orient_square(piece_square, perspective)
+    );
+}
+
 std::vector<std::uint32_t> active_features(const Board& board, Colour perspective){
     std::optional<Square> king_square;
     for (Square sq = 0; sq <= 63; sq++){
         const PieceOnSquare& pos = board.at(sq);
         if (pos.piece == Piece::King && pos.colour == perspective ) {
-            king_square = orient_square(sq, perspective);
+            king_square = sq;
             break;
         }
     }
@@ -80,11 +88,7 @@ std::vector<std::uint32_t> active_features(const Board& board, Colour perspectiv
         if (pos.piece == Piece::None
         || (pos.piece == Piece::King && pos.colour == perspective)) continue;
         
-        std::uint32_t piece_index = relative_piece_index(pos, perspective);
-
-        Square piece_square = orient_square(sq, perspective);
-        
-        features.push_back(feature_index(*king_square, piece_index, piece_square));
+        features.push_back(feature_for_piece(*king_square, pos, sq, perspective));
     }
     
     return features;

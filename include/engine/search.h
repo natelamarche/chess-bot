@@ -3,6 +3,7 @@
 #include "chess/board.h"
 #include "chess/move.h"
 #include "engine/nnue_model.h"
+#include "engine/nnue_state.h"
 
 namespace chess::engine {
 
@@ -34,7 +35,7 @@ public:
 private:
     const NnueModel& model_;
 
-    int negamax(Board& board, int depth, int alpha, int beta);
+    int negamax(Board& board, NnueState& state, int depth, int alpha, int beta);
 
     SearchStats stats_;
 

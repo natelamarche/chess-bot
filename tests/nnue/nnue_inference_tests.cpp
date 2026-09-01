@@ -16,20 +16,12 @@ bool expect_evaluation(
     chess::Board board;
     board.set_fen(fen);
 
-    const auto white = chess::engine::nnue::rebuild_accumulator(
-        board,
-        chess::Colour::White,
-        model
-    );
-    const auto black = chess::engine::nnue::rebuild_accumulator(
-        board,
-        chess::Colour::Black,
-        model
-    );
+    chess::engine::NnueState state;
+    state.initialize(board, model);
 
     const float actual = model.forward(
-        white,
-        black,
+        state.white(),
+        state.black(),
         board.side_to_move()
     );
 

@@ -11,9 +11,9 @@ constexpr int INF = 1000000;
 
 }
 
-int Searcher::negamax(Board& board, int depth, int alpha, int beta){
+int Searcher::negamax(Board& board, NnueState& state, int depth, int alpha, int beta){
     stats_.nodes++;
-    if (depth == 0) return evaluate(board, model_);
+    if (depth == 0) return evaluate(board, state, model_);
 
     std::vector<Move> moves = generate_legal_moves(board);
 
@@ -28,9 +28,15 @@ int Searcher::negamax(Board& board, int depth, int alpha, int beta){
     int best_score = -INF;
 
     for (const Move& move : moves) {
-        UndoState undo_state = board.make_move(move);
+        NnueState child_state = state;
 
-        int score = -negamax(board, depth - 1, -beta, -alpha);
+        const MoveFeatureChanges changes = prepare_move(board, move);
+
+        const UndoState undo_state = board.make_move(move);
+
+        child_state.apply_move(changes, board, model_);
+
+        int score = -negamax(board, child_state, depth - 1, -beta, -alpha);
         
         board.unmake_move(move, undo_state);
 
@@ -60,8 +66,11 @@ SearchResult Searcher::search_best_move(Board& board, int depth){
 
     std::vector<Move> moves = generate_legal_moves(board);
 
+    NnueState state{};
+    state.initialize(board, model_);
+
     if (moves.empty()){
-        result.score = negamax(board, depth, -INF, INF);
+        result.score = negamax(board, state, depth, -INF, INF);
         return result;
     }    
     
@@ -69,9 +78,15 @@ SearchResult Searcher::search_best_move(Board& board, int depth){
     int beta = INF;
 
     for (const Move& move : moves) {
+        NnueState child_state = state;
+
+        const MoveFeatureChanges changes = prepare_move(board, move);
+
         UndoState undo_state = board.make_move(move);
+
+        child_state.apply_move(changes, board, model_);
         
-        int score = -negamax(board, depth - 1, -beta, -alpha);
+        int score = -negamax(board, child_state, depth - 1, -beta, -alpha);
 
         board.unmake_move(move, undo_state);
 
@@ -83,7 +98,6 @@ SearchResult Searcher::search_best_move(Board& board, int depth){
         if (score > alpha) {
             alpha = score;
         }
-
 
     }
 

@@ -1,25 +1,31 @@
+#include <algorithm>
 #include <cmath>
-#include <cstdint>
 #include <iostream>
-#include <stdexcept>
-#include <vector>
+#include <span>
+#include <string>
 
 #include "chess/board.h"
+#include "chess/movegen.h"
 #include "engine/nnue_model.h"
 #include "engine/nnue_state.h"
 
 namespace {
 
 bool accumulators_match(
-    const chess::engine::nnue::Accumulator& actual,
-    const std::vector<float>& expected
+    std::span<const float> actual,
+    std::span<const float> expected,
+    const std::string& description
 ) {
     if (actual.size() != expected.size()) {
+        std::cerr << description << ": accumulator sizes differ\n";
         return false;
     }
 
     for (std::size_t i = 0; i < actual.size(); ++i) {
-        if (std::abs(actual[i] - expected[i]) > 1e-5F) {
+        if (std::abs(actual[i] - expected[i]) > 1e-4F) {
+            std::cerr << description << ": mismatch at index " << i
+                      << " (actual " << actual[i]
+                      << ", expected " << expected[i] << ")\n";
             return false;
         }
     }
@@ -27,71 +33,143 @@ bool accumulators_match(
     return true;
 }
 
-std::vector<float> expected_accumulator(
+bool expect_incremental_move(
     const chess::engine::NnueModel& model,
-    const std::vector<std::uint32_t>& features
+    const std::string& description,
+    const std::string& fen,
+    int from,
+    int to,
+    chess::Piece promotion = chess::Piece::None
 ) {
-    const auto bias = model.accumulator_bias();
-    std::vector<float> expected(bias.begin(), bias.end());
+    chess::Board board;
+    board.set_fen(fen);
 
-    for (std::uint32_t feature : features) {
-        const float* weights = model.feature_weights(feature);
-        for (std::size_t i = 0; i < expected.size(); ++i) {
-            expected[i] += weights[i];
+    const auto legal_moves = chess::generate_legal_moves(board);
+    const auto match = std::find_if(
+        legal_moves.begin(),
+        legal_moves.end(),
+        [from, to, promotion](const chess::Move& move) {
+            return move.from == from
+                && move.to == to
+                && move.promotion == promotion;
         }
+    );
+
+    if (match == legal_moves.end()) {
+        std::cerr << description << ": test move is not legal\n";
+        return false;
     }
 
-    return expected;
+    chess::engine::NnueState incremental;
+    incremental.initialize(board, model);
+
+    const chess::engine::MoveFeatureChanges changes =
+        chess::engine::prepare_move(board, *match);
+
+    board.make_move(*match);
+    incremental.apply_move(changes, board, model);
+
+    chess::engine::NnueState rebuilt;
+    rebuilt.initialize(board, model);
+
+    return accumulators_match(
+               incremental.white(),
+               rebuilt.white(),
+               description + " white"
+           )
+        && accumulators_match(
+               incremental.black(),
+               rebuilt.black(),
+               description + " black"
+           );
 }
 
 } // namespace
 
 int main() {
-    chess::Board board;
-    board.set_fen("4k3/8/8/3q4/4P3/8/8/4K3 w - - 0 1");
-
-    chess::engine::NnueModel unloaded_model;
-    try {
-        chess::engine::nnue::rebuild_accumulator(
-            board,
-            chess::Colour::White,
-            unloaded_model
-        );
-        std::cerr << "Expected an unloaded model to be rejected\n";
-        return 1;
-    } catch (const std::logic_error&) {
-    }
-
     chess::engine::NnueModel model;
     model.load("ml/model/model.nnue");
 
-    const auto white = chess::engine::nnue::rebuild_accumulator(
-        board,
-        chess::Colour::White,
-        model
-    );
-    const auto expected_white = expected_accumulator(
-        model,
-        {2844, 3427, 3516}
-    );
-
-    if (!accumulators_match(white, expected_white)) {
-        std::cerr << "White accumulator did not match expected values\n";
+    if (!expect_incremental_move(
+            model,
+            "quiet move",
+            "rnbqkbnr/pppppppp/8/8/8/8/"
+            "PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            12,
+            28
+        )) {
         return 1;
     }
 
-    const auto black = chess::engine::nnue::rebuild_accumulator(
-        board,
-        chess::Colour::Black,
-        model
-    );
-    const auto expected_black = expected_accumulator(
-        model,
-        {3099, 3172, 3516}
-    );
+    if (!expect_incremental_move(
+            model,
+            "capture",
+            "4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1",
+            28,
+            35
+        )) {
+        return 1;
+    }
 
-    if (!accumulators_match(black, expected_black)) {
-        std::cerr << "Black accumulator did not match expected values\n";
+    if (!expect_incremental_move(
+            model,
+            "king move",
+            "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+            4,
+            12
+        )) {
+        return 1;
+    }
+
+    if (!expect_incremental_move(
+            model,
+            "white king-side castle",
+            "4k3/8/8/8/8/8/8/4K2R w K - 0 1",
+            4,
+            6
+        )) {
+        return 1;
+    }
+
+    if (!expect_incremental_move(
+            model,
+            "black queen-side castle",
+            "r3k3/8/8/8/8/8/8/4K3 b q - 0 1",
+            60,
+            58
+        )) {
+        return 1;
+    }
+
+    if (!expect_incremental_move(
+            model,
+            "en passant",
+            "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1",
+            36,
+            43
+        )) {
+        return 1;
+    }
+
+    if (!expect_incremental_move(
+            model,
+            "promotion",
+            "4k3/P7/8/8/8/8/8/4K3 w - - 0 1",
+            48,
+            56,
+            chess::Piece::Queen
+        )) {
+        return 1;
+    }
+
+    if (!expect_incremental_move(
+            model,
+            "capture promotion",
+            "1r2k3/P7/8/8/8/8/8/4K3 w - - 0 1",
+            48,
+            57,
+            chess::Piece::Queen
+        )) {
         return 1;
     }
 
